@@ -930,7 +930,10 @@ export async function waitForProcessing(
   repositoryNwo: RepositoryNwo,
   sarifID: string,
   logger: Logger,
-  options: { isUnsuccessfulExecution: boolean } = {
+  options: {
+    isUnsuccessfulExecution: boolean;
+    uploadSizeInfo?: UploadStatusReport;
+  } = {
     isUnsuccessfulExecution: false,
   },
 ): Promise<void> {
@@ -986,8 +989,32 @@ export async function waitForProcessing(
       } else if (status === "complete") {
         break;
       } else if (status === "failed") {
-        const message = `Code Scanning could not process the submitted SARIF file:\n${response.data.errors}`;
         const processingErrors = response.data.errors as string[];
+        let message = `Code Scanning could not process the submitted SARIF file:\n${response.data.errors}`;
+        
+        // If the error is about the file being too large, include size information
+        if (
+          options.uploadSizeInfo &&
+          processingErrors.some((error) =>
+            error.toLowerCase().includes("too large"),
+          )
+        ) {
+          const sizeInfo: string[] = [];
+          if (options.uploadSizeInfo.raw_upload_size_bytes !== undefined) {
+            sizeInfo.push(
+              `Raw upload size: ${options.uploadSizeInfo.raw_upload_size_bytes} bytes`,
+            );
+          }
+          if (options.uploadSizeInfo.zipped_upload_size_bytes !== undefined) {
+            sizeInfo.push(
+              `Base64 zipped upload size: ${options.uploadSizeInfo.zipped_upload_size_bytes} bytes`,
+            );
+          }
+          if (sizeInfo.length > 0) {
+            message += `\n${sizeInfo.join(", ")}`;
+          }
+        }
+        
         throw shouldConsiderConfigurationError(processingErrors)
           ? new ConfigurationError(message)
           : shouldConsiderInvalidRequest(processingErrors)

@@ -115,7 +115,10 @@ async function maybeUploadFailedSarif(
     repositoryNwo,
     uploadResult.sarifID,
     logger,
-    { isUnsuccessfulExecution: true },
+    {
+      isUnsuccessfulExecution: true,
+      uploadSizeInfo: uploadResult.statusReport,
+    },
   );
   return uploadResult
     ? { ...uploadResult.statusReport, sarifID: uploadResult.sarifID }

@@ -960,3 +960,119 @@ for (const analysis of [CodeScanning, CodeQuality]) {
     });
   });
 }
+
+test("waitForProcessing includes size info in too large error", async (t) => {
+  const repositoryNwo = { owner: "github", repo: "codeql-action" };
+  const sarifID = "test-sarif-id";
+  const logger = getRunnerLogger(true);
+
+  const apiClientStub = sinon.stub(api, "getApiClient");
+  const requestStub = sinon.stub();
+  apiClientStub.returns({ request: requestStub } as any);
+
+  // Mock the API response for a "too large" error
+  requestStub.resolves({
+    data: {
+      processing_status: "failed",
+      errors: ["Gzipped SARIF file is too large"],
+    },
+  });
+
+  const uploadSizeInfo = {
+    raw_upload_size_bytes: 10485760, // 10 MB
+    zipped_upload_size_bytes: 2097152, // 2 MB
+    num_results_in_sarif: 100,
+  };
+
+  const error = await t.throwsAsync(
+    uploadLib.waitForProcessing(repositoryNwo, sarifID, logger, {
+      isUnsuccessfulExecution: false,
+      uploadSizeInfo,
+    }),
+  );
+
+  t.true(
+    error?.message.includes("Gzipped SARIF file is too large"),
+    "Error message should include the original error",
+  );
+  t.true(
+    error?.message.includes("Raw upload size: 10485760 bytes"),
+    "Error message should include raw upload size",
+  );
+  t.true(
+    error?.message.includes("Base64 zipped upload size: 2097152 bytes"),
+    "Error message should include zipped upload size",
+  );
+});
+
+test("waitForProcessing does not add size info for non-size errors", async (t) => {
+  const repositoryNwo = { owner: "github", repo: "codeql-action" };
+  const sarifID = "test-sarif-id";
+  const logger = getRunnerLogger(true);
+
+  const apiClientStub = sinon.stub(api, "getApiClient");
+  const requestStub = sinon.stub();
+  apiClientStub.returns({ request: requestStub } as any);
+
+  // Mock the API response for a different error
+  requestStub.resolves({
+    data: {
+      processing_status: "failed",
+      errors: ["Invalid SARIF format"],
+    },
+  });
+
+  const uploadSizeInfo = {
+    raw_upload_size_bytes: 10485760,
+    zipped_upload_size_bytes: 2097152,
+    num_results_in_sarif: 100,
+  };
+
+  const error = await t.throwsAsync(
+    uploadLib.waitForProcessing(repositoryNwo, sarifID, logger, {
+      isUnsuccessfulExecution: false,
+      uploadSizeInfo,
+    }),
+  );
+
+  t.true(
+    error?.message.includes("Invalid SARIF format"),
+    "Error message should include the original error",
+  );
+  t.false(
+    error?.message.includes("Raw upload size"),
+    "Error message should not include size info for non-size errors",
+  );
+});
+
+test("waitForProcessing works without size info", async (t) => {
+  const repositoryNwo = { owner: "github", repo: "codeql-action" };
+  const sarifID = "test-sarif-id";
+  const logger = getRunnerLogger(true);
+
+  const apiClientStub = sinon.stub(api, "getApiClient");
+  const requestStub = sinon.stub();
+  apiClientStub.returns({ request: requestStub } as any);
+
+  // Mock the API response for a "too large" error
+  requestStub.resolves({
+    data: {
+      processing_status: "failed",
+      errors: ["Gzipped SARIF file is too large"],
+    },
+  });
+
+  const error = await t.throwsAsync(
+    uploadLib.waitForProcessing(repositoryNwo, sarifID, logger),
+  );
+
+  t.true(
+    error?.message.includes("Gzipped SARIF file is too large"),
+    "Error message should include the original error",
+  );
+  t.false(
+    error?.message.includes("Raw upload size"),
+    "Error message should not include size info when not provided",
+  );
+});
+
