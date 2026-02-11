@@ -128,6 +128,10 @@ async function run(startedAt: Date) {
           getRepositoryNwo(),
           codeScanningResult.sarifID,
           logger,
+          {
+            isUnsuccessfulExecution: false,
+            uploadSizeInfo: codeScanningResult.statusReport,
+          },
         );
       }
       // The code quality service does not currently have an endpoint to wait for SARIF processing,

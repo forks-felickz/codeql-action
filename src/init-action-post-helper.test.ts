@@ -433,9 +433,19 @@ async function testFailedSarifUpload(
       `Actual args were: ${JSON.stringify(uploadFiles.args)}`,
     );
     t.true(
-      waitForProcessing.calledOnceWith(sinon.match.any, "42", sinon.match.any, {
-        isUnsuccessfulExecution: true,
-      }),
+      waitForProcessing.calledOnce,
+      "waitForProcessing should be called once",
+    );
+    const callArgs = waitForProcessing.getCall(0).args;
+    t.is(callArgs[1], "42", "sarifID should be '42'");
+    t.is(
+      callArgs[3]?.isUnsuccessfulExecution,
+      true,
+      "isUnsuccessfulExecution should be true",
+    );
+    t.truthy(
+      callArgs[3]?.uploadSizeInfo,
+      "uploadSizeInfo should be provided",
     );
   } else {
     t.true(diagnosticsExportStub.notCalled);

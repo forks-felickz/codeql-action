@@ -439,6 +439,11 @@ async function run(startedAt: Date) {
         getRepositoryNwo(),
         uploadResults[analyses.AnalysisKind.CodeScanning].sarifID,
         getActionsLogger(),
+        {
+          isUnsuccessfulExecution: false,
+          uploadSizeInfo:
+            uploadResults[analyses.AnalysisKind.CodeScanning].statusReport,
+        },
       );
     }
     // If we did not throw an error yet here, but we expect one, throw it.
