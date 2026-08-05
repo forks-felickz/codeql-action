@@ -17,19 +17,41 @@ jobs:
       matrix:
         tools:
           # Exact CodeQL CLI versions, with and without the optional v prefix.
+          - "1.28.1"
+          - "v1.28.1"
           - "2.20.1"
           - "v2.20.1"
-          - "2.18.4"
-          - "v2.18.4"
 
-          # SemVer ranges and partial versions.
-          - "2.20.x"
-          - "v2.20.x"
+          # Major and minor partial versions.
+          - "1.x"
+          - "1.28"
+          - "1.28.x"
           - "2.x"
           - "v2.x"
+          - "2.20"
+          - "2.20.x"
+          - "v2.20.x"
+
+          # Tilde and caret ranges.
+          - "~1.28.0"
+          - "^1.28.0"
           - "~2.20.0"
           - "^2.20.0"
+
+          # Comparator sets.
+          - ">=1.28.0 <2.0.0"
+          - ">=2.0.0"
+          - ">2.19.0"
+          - "<2.21.0"
+          - "<=2.20.1"
           - ">=2.20.0 <2.21.0"
+          - ">=2.20.0 <=2.20.7"
+
+          # Hyphen and OR ranges.
+          - "1.28.0 - 1.28.9"
+          - "2.19.0 - 2.20.7"
+          - "1.28.x || 2.20.x"
+          - "^1.28.0 || ^2.20.0"
 
           # Offsets into the stable CodeQL bundle release history.
           - "latest-0"
@@ -51,7 +73,7 @@ jobs:
         id: init
         uses: ./init
         with:
-          languages: actions
+          languages: python
           build-mode: none
           tools: ${{ matrix.tools }}
 
@@ -63,5 +85,5 @@ jobs:
       - name: Analyze
         uses: ./analyze
         with:
-          category: /language:actions
+          category: /language:python
           upload: never
