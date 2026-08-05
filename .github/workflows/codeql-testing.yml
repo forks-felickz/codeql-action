@@ -9,12 +9,16 @@ permissions:
 
 jobs:
   analyze:
-    name: tools ${{ matrix.tools }}
-    runs-on: ubuntu-latest
+    name: tools ${{ matrix.tools }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
         tools:
           # Exact CodeQL CLI versions, with and without the optional v prefix.
           - "1.28.1"
